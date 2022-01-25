@@ -1,4 +1,4 @@
-package com.targetpractice;
+package nl.sajansen.targetpractice;
 
 import com.facebook.react.ReactActivity;
 
