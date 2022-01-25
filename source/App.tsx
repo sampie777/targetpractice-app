@@ -6,106 +6,76 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-const Section: React.FC<{children: any, title: any}> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+} from "react-native";
+import Bluetooth, { Peripheral } from "./logic/bluetooth";
+import DeviceList from "./DeviceList";
+import DeviceScreen from "./DeviceScreen";
 
 const App: React.FC = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [isBluetoothEnabled, setIsBluetoothEnabled] = useState(false);
+  const [connectedDevice, setConnectedDevice] = useState<Peripheral | undefined>(undefined);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  useEffect(() => {
+    onLaunch();
+    return onExit;
+  }, []);
+
+  const onLaunch = () => {
+    Bluetooth.emitter.addListener("BleManagerDidUpdateState", onStateUpdated);
+  };
+
+  const onExit = () => {
+    Bluetooth.emitter.removeAllListeners("BleManagerDidUpdateState");
+  };
+
+  const onStateUpdated = ({ state }: { state: "on" | "off" | "turning_on" | "turning_off" }) => {
+    if (state === "off") {
+      Alert.alert("Bluetooth", "Please turn on your bluetooth");
+    }
+    setIsBluetoothEnabled(state === "on");
+  };
+
+  const connectToDevice = (device: Peripheral) => {
+    if (connectedDevice !== undefined && device.id === connectedDevice.id) {
+      return disconnectFromCurrentDevice();
+    }
+
+    setConnectedDevice(device)
+  }
+
+  const disconnectFromCurrentDevice = () => {
+    if (connectedDevice === undefined) {
+      return;
+    }
+
+    return Bluetooth.manager.disconnect(connectedDevice.id)
+      .then(() => {
+        console.log("Disconnected from the device");
+        setConnectedDevice(undefined);
+      })
+      .catch((error: any) => {
+        console.error("Failed to disconnect from device", error);
+      });
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <DeviceList onDeviceClick={connectToDevice} />
+      <DeviceScreen device={connectedDevice}
+                    disconnect={disconnectFromCurrentDevice} />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  container: {
+    flex: 1
+  }
 });
 
 export default App;
