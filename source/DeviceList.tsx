@@ -35,7 +35,6 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
     setDevices([]);
     Bluetooth.manager.scan([], 10, true)
       .then(() => {
-        console.log("Scanning started");
         setIsScanning(true);
       });
   };
@@ -43,7 +42,6 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
   const stopScan = () => {
     Bluetooth.manager.stopScan()
       .then(() => {
-        console.log("Scanning stopped");
         setIsScanning(false);
       });
   };
@@ -53,12 +51,10 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
   };
 
   const onScanningStopped = () => {
-    console.log("Scan finished");
     setIsScanning(false);
   };
 
   const onDeviceFound = (device: Peripheral) => {
-    console.log("onDeviceFound", device.id);
     addDevice(device);
   };
 
@@ -67,9 +63,14 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
     setDevices(Array.from(devicesMap.values()));
   };
 
+  const onClick = (device: Peripheral) => {
+    stopScan();
+    onDeviceClick?.(device)
+  }
+
   const renderDeviceItem = ({ item }: { item: Peripheral }) => {
     return <TouchableOpacity style={styles.item}
-                             onPress={() => onDeviceClick?.(item)}>
+                             onPress={() => onClick?.(item)}>
       <Text style={styles.itemName}>{item.name}</Text>
       <Text style={styles.itemId}>{item.id}</Text>
     </TouchableOpacity>;

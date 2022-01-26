@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Bluetooth, { Peripheral } from "./logic/bluetooth";
 import Config from "./config";
 import { bytesToString } from "./logic/utils";
@@ -16,6 +16,7 @@ interface ScreenProps {
 
 const DeviceHitStatus: React.FC<ScreenProps> = ({ device }) => {
   const [status, setStatus] = useState(Status.Unknown);
+  const [hitForce, setHitForce] = useState("");
 
   let _timer: any = null;
 
@@ -29,7 +30,7 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ device }) => {
       return;
     }
     clearInterval(_timer);
-  }
+  };
 
   const requestHitData = () => {
     Bluetooth.manager.read(device.id, Config.service, Config.characteristic)
@@ -38,7 +39,7 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ device }) => {
         processReceivedData(text);
       })
       .catch((error: any) => {
-        if (error == "Device is not connected") {
+        if (error == "Device is not connected" || error == "Device disconnected") {
           stopPolling();
           return;
         }
@@ -47,15 +48,19 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ device }) => {
   };
 
   const processReceivedData = (data: string) => {
-    if (data === "hit") {
-      setStatus(Status.Hit);
-    } else {
+    if (!data.startsWith("hit")) {
       setStatus(Status.Ready);
+      setHitForce("");
+      return;
+    }
+
+    setStatus(Status.Hit);
+    if (data.includes(";")) {
+      setHitForce(data.split(";")[1]);
     }
   };
 
   return <View style={styles.container}>
-    <Button title={"Refresh"} onPress={requestHitData} />
     <View style={[
       styles.status,
       (status !== Status.Ready ? {} : styles.statusReady),
@@ -66,6 +71,7 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ device }) => {
         {status === Status.Ready ? "ready" : undefined}
         {status === Status.Unknown ? "unknown" : undefined}
       </Text>
+      <Text style={styles.statusHitForce}>{hitForce}</Text>
     </View>
   </View>;
 };
@@ -89,6 +95,10 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 40,
+    color: "#fff"
+  },
+  statusHitForce: {
+    fontSize: 20,
     color: "#fff"
   }
 });

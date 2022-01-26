@@ -50,6 +50,7 @@ const App: React.FC = () => {
 
   const disconnectFromCurrentDevice = () => {
     if (connectedDevice === undefined) {
+      setConnectedDevice(undefined);
       return;
     }
 

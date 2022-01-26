@@ -48,6 +48,7 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
 
   const onDeviceDisconnect = (data: { peripheral: string, status: number }) => {
     setConnectionState(ConnectionState.Disconnected);
+    disconnect();
   };
 
   const onDeviceDidBond = (data: any) => {
