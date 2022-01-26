@@ -9,6 +9,7 @@ import DeviceHitStatus from "./DeviceHitStatus";
 import DeviceStatus from "./DeviceStatus";
 import LoadingOverlay from "../utils/LoadingOverlay";
 import ActionBar from "./ActionBar";
+import Settings from "./Settings";
 
 enum ConnectionState {
   Disconnected,
@@ -23,6 +24,7 @@ interface ScreenProps {
 
 const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   const [connectionState, setConnectionState] = useState(ConnectionState.Disconnected);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     onLaunch();
@@ -114,6 +116,10 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
     }
   };
 
+  const closeSettings = () => {
+    setShowSettings(false);
+  };
+
   if (device === undefined) {
     return <View style={styles.container}>
       <Text>Select a device to start a connection</Text>
@@ -121,7 +127,12 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   }
 
   return <View style={styles.container}>
-    <DeviceStatus device={device} disconnect={disconnect} />
+    {!showSettings ? undefined :
+      <Settings device={device} close={closeSettings} />}
+
+    <DeviceStatus device={device}
+                  disconnect={disconnect}
+                  openSettings={() => setShowSettings(true)} />
 
     <View style={styles.content}>
       <LoadingOverlay isVisible={connectionState !== ConnectionState.Connected}

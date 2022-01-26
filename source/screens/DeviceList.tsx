@@ -38,11 +38,11 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
 
   const startScan = () => {
     if (isScanning) {
-      return;
+      return stopScan();
     }
 
     setDevices([]);
-    Bluetooth.manager.scan([], 10, true)
+    Bluetooth.manager.scan([], 30, true)
       .then(() => {
         if (!_isMounted) {
           return;
