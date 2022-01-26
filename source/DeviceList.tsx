@@ -15,6 +15,7 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [devices, setDevices] = useState<Peripheral[]>([]);
   const devicesMap = new Map();
+  let _isMounted = false;
 
   useEffect(() => {
     onLaunch();
@@ -22,19 +23,30 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
   }, []);
 
   const onLaunch = () => {
+    _isMounted = true;
     Bluetooth.emitter.addListener("BleManagerStopScan", onScanningStopped);
     Bluetooth.emitter.addListener("BleManagerDiscoverPeripheral", onDeviceFound);
+    startScan();
   };
 
   const onExit = () => {
     Bluetooth.emitter.removeAllListeners("BleManagerStopScan");
     Bluetooth.emitter.removeAllListeners("BleManagerDiscoverPeripheral");
+    stopScan();
+    _isMounted = false;
   };
 
   const startScan = () => {
+    if (isScanning) {
+      return;
+    }
+
     setDevices([]);
     Bluetooth.manager.scan([], 10, true)
       .then(() => {
+        if (!_isMounted) {
+          return;
+        }
         setIsScanning(true);
       });
   };
@@ -77,44 +89,59 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
   };
 
   return <View style={styles.container}>
+    <Text style={styles.headerText}>Nearby devices</Text>
+    <FlatList data={devices}
+              contentContainerStyle={styles.list}
+              renderItem={renderDeviceItem}
+              keyExtractor={item => item.id} />
     <TouchableOpacity onPress={toggleScan}
                       style={styles.button}>
       <Text style={styles.buttonText}>
         {isScanning ? "Scanning... (click to stop)" : "Scan"}
       </Text>
     </TouchableOpacity>
-
-    <FlatList data={devices}
-              contentContainerStyle={styles.list}
-              renderItem={renderDeviceItem}
-              keyExtractor={item => item.id} />
   </View>;
 };
 
 const styles = StyleSheet.create({
-  container: {},
-  button: {
-    backgroundColor: "dodgerblue"
+  container: {
+    flex: 1,
+    backgroundColor: "#0000000a",
   },
-  buttonText: {
-    paddingHorizontal: 20,
+  headerText: {
+    fontSize: 18,
     paddingVertical: 10,
-    textAlign: "center",
-    color: "#fff",
-    fontSize: 18
-  },
-  list: {},
-  item: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
     paddingHorizontal: 20,
-    paddingVertical: 10
+    marginBottom: 2,
+    backgroundColor: "#fff",
+    textAlign: "center",
+  },
+
+  list: {
+    flex: 1,
+  },
+  item: {
+    marginBottom: 1,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    backgroundColor: "#fff",
   },
   itemName: {
     fontWeight: "bold",
     fontSize: 16
   },
-  itemId: {}
+  itemId: {},
+
+  button: {
+    backgroundColor: "dodgerblue"
+  },
+  buttonText: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    textAlign: "center",
+    color: "#fff",
+    fontSize: 18
+  },
 });
 
 export default DeviceList;

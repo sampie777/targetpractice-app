@@ -8,9 +8,9 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
+  Alert, BackHandler,
   SafeAreaView,
-  StyleSheet,
+  StyleSheet
 } from "react-native";
 import Bluetooth, { Peripheral } from "./logic/bluetooth";
 import DeviceList from "./DeviceList";
@@ -40,13 +40,27 @@ const App: React.FC = () => {
     setIsBluetoothEnabled(state === "on");
   };
 
+  useEffect(() => {
+    BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+  }, [connectedDevice]);
+
+  const onBackPress = (): boolean => {
+    if (connectedDevice === undefined) {
+      return false;
+    }
+
+    disconnectFromCurrentDevice();
+    return true;
+  };
+
   const connectToDevice = (device: Peripheral) => {
     if (connectedDevice !== undefined && device.id === connectedDevice.id) {
       return disconnectFromCurrentDevice();
     }
 
-    setConnectedDevice(device)
-  }
+    setConnectedDevice(device);
+  };
 
   const disconnectFromCurrentDevice = () => {
     if (connectedDevice === undefined) {
@@ -66,9 +80,12 @@ const App: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <DeviceList onDeviceClick={connectToDevice} />
-      <DeviceScreen device={connectedDevice}
-                    disconnect={disconnectFromCurrentDevice} />
+      {connectedDevice !== undefined ? undefined :
+        <DeviceList onDeviceClick={connectToDevice} />}
+
+      {connectedDevice === undefined ? undefined :
+        <DeviceScreen device={connectedDevice}
+                      disconnect={disconnectFromCurrentDevice} />}
     </SafeAreaView>
   );
 };
