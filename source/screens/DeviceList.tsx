@@ -5,7 +5,7 @@ import {
   Text, TouchableOpacity,
   View
 } from "react-native";
-import Bluetooth, { Peripheral } from "./logic/bluetooth";
+import Bluetooth, { Peripheral } from "../logic/bluetooth";
 
 interface ScreenProps {
   onDeviceClick?: (device: Peripheral) => void;
@@ -54,6 +54,9 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
   const stopScan = () => {
     Bluetooth.manager.stopScan()
       .then(() => {
+        if (!_isMounted) {
+          return;
+        }
         setIsScanning(false);
       });
   };
@@ -106,7 +109,6 @@ const DeviceList: React.FC<ScreenProps> = ({ onDeviceClick }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0000000a",
   },
   headerText: {
     fontSize: 18,

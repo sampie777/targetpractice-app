@@ -13,8 +13,8 @@ import {
   StyleSheet
 } from "react-native";
 import Bluetooth, { Peripheral } from "./logic/bluetooth";
-import DeviceList from "./DeviceList";
-import DeviceScreen from "./DeviceScreen";
+import DeviceList from "./screens/DeviceList";
+import DeviceScreen from "./screens/device/DeviceScreen";
 
 const App: React.FC = () => {
   const [isBluetoothEnabled, setIsBluetoothEnabled] = useState(false);
@@ -92,7 +92,8 @@ const App: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: "#0000000a",
   }
 });
 

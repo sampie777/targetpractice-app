@@ -4,9 +4,11 @@ import {
   Text,
   View
 } from "react-native";
-import Bluetooth, { Characteristic, Peripheral } from "./logic/bluetooth";
+import Bluetooth, { Characteristic, Peripheral } from "../../logic/bluetooth";
 import DeviceHitStatus from "./DeviceHitStatus";
-import DeviceHitReset from "./DeviceHitReset";
+import DeviceStatus from "./DeviceStatus";
+import LoadingOverlay from "../utils/LoadingOverlay";
+import ActionBar from "./ActionBar";
 
 enum ConnectionState {
   Disconnected,
@@ -101,6 +103,17 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
       });
   };
 
+  const getConnectionText = () => {
+    switch (connectionState) {
+      case ConnectionState.Disconnected:
+        return "Not connected";
+      case ConnectionState.Connecting:
+        return "Connecting...";
+      case ConnectionState.Connected:
+        return "Connected";
+    }
+  };
+
   if (device === undefined) {
     return <View style={styles.container}>
       <Text>Select a device to start a connection</Text>
@@ -108,20 +121,26 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   }
 
   return <View style={styles.container}>
-    <Text>{device.name}</Text>
-    <Text>
-      {connectionState !== ConnectionState.Disconnected ? undefined : "Not connected"}
-      {connectionState !== ConnectionState.Connecting ? undefined : "Connecting..."}
-      {connectionState !== ConnectionState.Connected ? undefined : "Connected"}
-    </Text>
+    <DeviceStatus device={device} disconnect={disconnect} />
 
-    {connectionState !== ConnectionState.Connected ? undefined : <DeviceHitReset device={device} />}
-    {connectionState !== ConnectionState.Connected ? undefined : <DeviceHitStatus device={device} />}
+    <View style={styles.content}>
+      <LoadingOverlay isVisible={connectionState !== ConnectionState.Connected}
+                      text={getConnectionText()} />
+
+      {connectionState !== ConnectionState.Connected
+        ? <View style={{ flex: 1 }} />
+        : <DeviceHitStatus device={device} disconnect={disconnect} />}
+
+      <ActionBar device={device} />
+    </View>
   </View>;
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1
+  },
+  content: {
     flex: 1
   }
 });
