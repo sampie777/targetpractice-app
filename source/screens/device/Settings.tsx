@@ -1,42 +1,83 @@
-import React, { useState } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import Bluetooth, { Peripheral } from "../../logic/bluetooth";
 import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
-import { stringToBytes } from "../../logic/utils";
+import { bytesToString, emptyPromise, stringToBytes } from "../../logic/utils";
 import Config from "../../config";
 import LoadingOverlay from "../utils/LoadingOverlay";
 
 interface Props {
-  device?: Peripheral;
+  device: Peripheral;
   close?: () => void;
 }
 
 const Settings: React.FC<Props> = ({ device, close }) => {
-  const [force, setForce] = useState("800");
-  const [brightness, setBrightness] = useState("255");
+  const [force, setForce] = useState("loading...");
+  const [brightness, setBrightness] = useState("loading...");
   const [pollInterval, setPollInterval] = useState(Config.pollInterval.toString());
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    read();
+  }, []);
+
+  const read = () => {
+    send("read;force")
+      .then(() => readConfig())
+      .then(() => send("read;bright"))
+      .then(() => readConfig());
+  };
+
+  const readConfig = () => {
+    return Bluetooth.manager.read(device.id, Config.service, Config.configCharacteristic)
+      .then((data: Uint8Array) => {
+        const text = bytesToString(data);
+        processReceivedData(text);
+      })
+      .catch((error: any) => {
+        console.error("Failed to read config from device", error);
+      });
+  };
+
+  const processReceivedData = (data: string) => {
+    if (!data.includes(";")) {
+      return;
+    }
+
+    const [key, value] = data.split(";");
+    switch (key) {
+      case "force":
+        setForce(value);
+        break;
+      case "bright":
+        setBrightness(value);
+        break;
+      default:
+        console.log("Unknown key/value config pair: ", [key, value]);
+    }
+  };
+
   const save = () => {
+    if (force.length === 0 || brightness.length === 0) {
+      Alert.alert("Invalid data", "Please make sure to fill in all the fields");
+      return;
+    }
+
     setIsSaving(true);
     Config.pollInterval = +pollInterval;
 
-    send("force;" + force)
-      .then(() => send("bright;" + brightness))
+    // Only send the values which are loaded
+    (force === "loading..." ? emptyPromise() : send("force;" + force))
+      .then(() => brightness === "loading..." ? emptyPromise() : send("bright;" + brightness))
       .then(() => {
         setIsSaving(false);
-        close?.()
+        close?.();
       });
   };
 
   const send = (text: string): Promise<any> => {
-    console.log("Saving: ", text);
-    if (device === undefined) {
-      return new Promise((resolve) => resolve(undefined));
-    }
-
     const data = stringToBytes(text);
-    return Bluetooth.manager.write(device.id, Config.service, Config.characteristic, data)
+    return Bluetooth.manager.write(device.id, Config.service, Config.configCharacteristic, data)
       .catch((error: any) => {
         console.error("Failed to write to device", error);
       });
@@ -57,7 +98,9 @@ const Settings: React.FC<Props> = ({ device, close }) => {
         <View style={styles.item}>
           <Text style={styles.itemLabel}>Force threshold</Text>
           <TextInput style={styles.itemInput}
+                     editable={force !== "loading..."}
                      value={force}
+                     maxLength={4}
                      onChangeText={setForce}
                      keyboardType={"numeric"} />
         </View>
@@ -65,7 +108,9 @@ const Settings: React.FC<Props> = ({ device, close }) => {
         <View style={styles.item}>
           <Text style={styles.itemLabel}>Brightness</Text>
           <TextInput style={styles.itemInput}
+                     editable={brightness !== "loading..."}
                      value={brightness}
+                     maxLength={4}
                      onChangeText={setBrightness}
                      keyboardType={"numeric"} />
         </View>
@@ -74,6 +119,7 @@ const Settings: React.FC<Props> = ({ device, close }) => {
           <Text style={styles.itemLabel}>Poll interval (ms)</Text>
           <TextInput style={styles.itemInput}
                      value={pollInterval}
+                     maxLength={6}
                      onChangeText={setPollInterval}
                      keyboardType={"numeric"} />
         </View>
@@ -147,7 +193,7 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 10
   },
   itemLabel: {
     flex: 1

@@ -46,7 +46,6 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   };
 
   const onDeviceConnect = (data: { peripheral: string, status: number }) => {
-    setConnectionState(ConnectionState.Connected);
     retrieveServices();
   };
 
@@ -96,9 +95,14 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
       return;
     }
 
-    Bluetooth.manager.retrieveServices(device.id)
+    Bluetooth.manager.refreshCache(device.id)
+      .catch((error: any) => {
+        console.error("Failed to refresh cache for device", error);
+      })
+      .then(() => Bluetooth.manager.retrieveServices(device.id))
       .then((data: (Peripheral & { characteristics: Characteristic[], services: Array<{ uuid: string }> })) => {
         console.log("Retrieved services. Ready for data transmission.");
+        setConnectionState(ConnectionState.Connected);
       })
       .catch((error: any) => {
         console.error("Failed to retrieve services from device", error);

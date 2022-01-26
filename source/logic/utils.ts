@@ -30,3 +30,5 @@ export function format(date: Date | string, format: string) {
     .replace(/%S/g, date.getSeconds().toString())
     .replace(/%f/g, date.getMilliseconds().toString().padStart(3, '0'));
 }
+
+export const emptyPromise = () => new Promise((resolve => resolve(null)))
