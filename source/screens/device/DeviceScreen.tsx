@@ -10,6 +10,7 @@ import DeviceStatus from "./DeviceStatus";
 import LoadingOverlay from "../utils/LoadingOverlay";
 import ActionBar from "./ActionBar";
 import Settings from "./Settings";
+import { DeviceState } from "../../logic/DeviceState";
 
 enum ConnectionState {
   Disconnected,
@@ -25,6 +26,7 @@ interface ScreenProps {
 const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   const [connectionState, setConnectionState] = useState(ConnectionState.Disconnected);
   const [showSettings, setShowSettings] = useState(false);
+  const [deviceState, setDeviceState] = useState<DeviceState | undefined>(undefined);
 
   useEffect(() => {
     onLaunch();
@@ -34,14 +36,12 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   const onLaunch = () => {
     Bluetooth.emitter.addListener("BleManagerConnectPeripheral", onDeviceConnect);
     Bluetooth.emitter.addListener("BleManagerDisconnectPeripheral", onDeviceDisconnect);
-    Bluetooth.emitter.addListener("BleManagerPeripheralDidBond", onDeviceDidBond);
     Bluetooth.emitter.addListener("BleManagerDidUpdateValueForCharacteristic", onDeviceSentValue);
   };
 
   const onExit = () => {
     Bluetooth.emitter.removeAllListeners("BleManagerConnectPeripheral");
     Bluetooth.emitter.removeAllListeners("BleManagerDisconnectPeripheral");
-    Bluetooth.emitter.removeAllListeners("BleManagerPeripheralDidBond");
     Bluetooth.emitter.removeAllListeners("BleManagerDidUpdateValueForCharacteristic");
   };
 
@@ -50,12 +50,10 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
   };
 
   const onDeviceDisconnect = (data: { peripheral: string, status: number }) => {
+    deviceState?.stopPolling();
     setConnectionState(ConnectionState.Disconnected);
+    setDeviceState(undefined);
     disconnect();
-  };
-
-  const onDeviceDidBond = (data: any) => {
-    console.log("onDeviceDidBond", data);
   };
 
   const onDeviceSentValue = (data: { value: Array<any>, id: string, characteristic: string, service: string }) => {
@@ -69,7 +67,11 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
 
   useEffect(() => {
     connect();
-    return () => setConnectionState(ConnectionState.Disconnected);
+    return () => {
+      deviceState?.stopPolling();
+      setConnectionState(ConnectionState.Disconnected);
+      setDeviceState(undefined)
+    };
   }, [device]);
 
   const connect = () => {
@@ -103,6 +105,10 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
       .then((data: (Peripheral & { characteristics: Characteristic[], services: Array<{ uuid: string }> })) => {
         console.log("Retrieved services. Ready for data transmission.");
         setConnectionState(ConnectionState.Connected);
+
+        const newDeviceState = new DeviceState(device, disconnect);
+        newDeviceState.startPolling();
+        setDeviceState(newDeviceState);
       })
       .catch((error: any) => {
         console.error("Failed to retrieve services from device", error);
@@ -142,9 +148,9 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
       <LoadingOverlay isVisible={connectionState !== ConnectionState.Connected}
                       text={getConnectionText()} />
 
-      {connectionState !== ConnectionState.Connected
+      {deviceState === undefined
         ? <View style={{ flex: 1 }} />
-        : <DeviceHitStatus device={device} disconnect={disconnect} />}
+        : <DeviceHitStatus device={device} deviceState={deviceState} />}
 
       <ActionBar device={device} />
     </View>

@@ -1,105 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { Text, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
-import Bluetooth, { Peripheral } from "../../logic/bluetooth";
-import Config from "../../config";
-import { bytesToString, format, stringToBytes } from "../../logic/utils";
+import { Peripheral } from "../../logic/bluetooth";
 import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
-
-enum Status {
-  Disabled,
-  Ready,
-  Hit,
-  Unknown,
-}
+import { DeviceData, DeviceState, TargetStatus } from "../../logic/DeviceState";
 
 interface ScreenProps {
   device: Peripheral;
-  disconnect: () => void;
+  deviceState?: DeviceState;
 }
 
-const DeviceHitStatus: React.FC<ScreenProps> = ({ device, disconnect }) => {
-  const [status, setStatus] = useState(Status.Unknown);
+const DeviceHitStatus: React.FC<ScreenProps> = ({ device, deviceState }) => {
+  const [status, setStatus] = useState(TargetStatus.Unknown);
   const [hitForce, setHitForce] = useState("");
   const [hitDuration, setHitDuration] = useState("");
 
-  let _timer: any = null;
-
   useEffect(() => {
-    _timer = setInterval(requestHitData, Config.pollInterval);
-    return stopPolling;
-  }, []);
+    deviceState?.addEventListener(onDeviceUpdated);
+    return () => deviceState?.removeEventListener(onDeviceUpdated);
+  }, [deviceState]);
 
-  const stopPolling = () => {
-    if (_timer == null) {
-      return;
-    }
-    clearInterval(_timer);
+  const onDeviceUpdated = ({ targetStatus, hitForce, hitDuration }: DeviceData) => {
+    setStatus(targetStatus);
+    setHitForce(hitForce);
+    setHitDuration(hitDuration);
   };
 
-  const requestHitData = () => {
-    Bluetooth.manager.read(device.id, Config.service, Config.characteristic)
-      .then((data: Uint8Array) => {
-        const text = bytesToString(data);
-        processReceivedData(text);
-      })
-      .catch((error: any) => {
-        if (error == "Device is not connected" || error == "Device disconnected") {
-          stopPolling();
-          return;
-        }
-        console.error("Failed to read from device", error);
-        disconnect();
-      });
-  };
-
-  const processReceivedData = (data: string) => {
-    if (data.startsWith("hit")) {
-      setStatus(Status.Hit);
-      if (data.includes(";")) {
-        const measurements = data.split(";");
-        setHitForce(measurements[1]);
-        if (measurements.length > 2) {
-          const durationMs = measurements[2];
-          const durationFormatted = format(new Date(+durationMs), "%M:%SS.%f");
-          setHitDuration(durationFormatted);
-        }
-      }
-      return;
-    }
-
-    setHitForce("");
-    setHitDuration("");
-
-    if (data === "on") {
-      setStatus(Status.Ready);
-    } else if (data === "off") {
-      setStatus(Status.Disabled);
-    } else {
-      setStatus(Status.Unknown);
-    }
-  };
-
-  const reset = () => {
-    send("on");
-  };
-
-  const set = () => {
-    send("off");
-  };
-
-  const send = (text: string) => {
-    const data = stringToBytes(text);
-    Bluetooth.manager.write(device.id, Config.service, Config.characteristic, data)
-      .catch((error: any) => {
-        console.error("Failed to write to device", error);
-      });
-  };
-
-  return <TouchableOpacity onPress={reset} style={[
+  return <TouchableOpacity onPress={deviceState?.resetTarget} style={[
     styles.container,
-    (status !== Status.Disabled ? {} : styles.statusDisabled),
-    (status !== Status.Ready ? {} : styles.statusReady),
-    (status !== Status.Hit ? {} : styles.statusHit)
+    (status !== TargetStatus.Disabled ? {} : styles.statusDisabled),
+    (status !== TargetStatus.Ready ? {} : styles.statusReady),
+    (status !== TargetStatus.Hit ? {} : styles.statusHit)
   ]}>
     <Text style={styles.statusHitForce}>{hitForce === "" ? undefined :
       <>
@@ -114,7 +44,7 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ device, disconnect }) => {
       </>}
     </Text>
 
-    {status === Status.Disabled || status === Status.Unknown ? undefined :
+    {status === TargetStatus.Disabled || status === TargetStatus.Unknown ? undefined :
       <Image source={require("../../resources/target.png")}
              style={[styles.image, { width: Dimensions.get("window").width - 50 }]}
              resizeMode={"center"} />
@@ -143,17 +73,17 @@ const styles = StyleSheet.create({
 
   statusHitForce: {
     fontSize: 16,
-    color: "#fff",
+    color: "#fff"
   },
   statusHitForceIcon: {
-    fontSize: 12,
+    fontSize: 12
   },
   statusHitDuration: {
     fontSize: 28,
     color: "#fff"
   },
   statusHitDurationIcon: {
-    fontSize: 22,
+    fontSize: 22
   },
 
   image: {
