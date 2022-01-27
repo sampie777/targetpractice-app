@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Text, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
-import { Peripheral } from "../../logic/bluetooth";
 import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
 import { DeviceData, DeviceState, TargetStatus } from "../../logic/DeviceState";
+import { format } from "../../logic/utils";
 
 interface ScreenProps {
   deviceState?: DeviceState;
@@ -40,7 +40,7 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ deviceState, onResetPress }) =
     <Text style={styles.statusHitDuration}>{hitDuration === "" ? undefined :
       <>
         <FontAwesome5Icon name={"clock"} style={styles.statusHitDurationIcon} />&nbsp;
-        {hitDuration}
+        {format(new Date(+hitDuration), "%M:%SS.%f")}
       </>}
     </Text>
 

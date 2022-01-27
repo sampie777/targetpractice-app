@@ -4,6 +4,7 @@ import ActionBarItem from "./ActionBarItem";
 import { Exercise } from "../../logic/exercises/Exercise";
 import { ReactionTimeExercise } from "../../logic/exercises/ReactionTimeExercise";
 import { DeviceState } from "../../logic/DeviceState";
+import { QuickSixExercise } from "../../logic/exercises/QuickSixExercise";
 
 interface Props {
   deviceState?: DeviceState,
@@ -18,6 +19,11 @@ const ActionBar: React.FC<Props> = ({ deviceState, exercise, setExercise }) => {
     };
   }, [exercise]);
 
+  const onDisable = () => {
+    exercise?.stop();
+    setExercise(undefined);
+  };
+
   const onItemClick = (clazz: any) => {
     if (exercise !== undefined && exercise instanceof clazz) {
       exercise.stop();
@@ -29,7 +35,7 @@ const ActionBar: React.FC<Props> = ({ deviceState, exercise, setExercise }) => {
       return;
     }
 
-    const newExercise = new clazz(deviceState) as Exercise;
+    const newExercise = new clazz(deviceState, onDisable) as Exercise;
     newExercise.start();
     setExercise(newExercise);
   };
@@ -39,10 +45,11 @@ const ActionBar: React.FC<Props> = ({ deviceState, exercise, setExercise }) => {
                    icon={"stopwatch"}
                    highlighted={exercise instanceof ReactionTimeExercise}
                    onPress={() => onItemClick(ReactionTimeExercise)} />
-    <ActionBarItem text={"item 2"}
-                   icon={"random"} />
-    <ActionBarItem text={"item 3"}
-                   icon={"layer-group"} />
+    {/*<ActionBarItem text={"item 2"} icon={"random"} />*/}
+    <ActionBarItem text={"Quick Six"}
+                   icon={"layer-group"}
+                   highlighted={exercise instanceof QuickSixExercise}
+                   onPress={() => onItemClick(QuickSixExercise)} />
   </View>;
 };
 

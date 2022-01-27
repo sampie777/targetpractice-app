@@ -1,6 +1,6 @@
 import Config from "../config";
 import Bluetooth, { Peripheral } from "./bluetooth";
-import { bytesToString, format, stringToBytes } from "./utils";
+import { bytesToString, stringToBytes } from "./utils";
 
 
 export enum TargetStatus {
@@ -82,8 +82,7 @@ export class DeviceState {
         this.data.hitForce = measurements[1];
 
         if (measurements.length > 2) {
-          const durationMs = measurements[2];
-          this.data.hitDuration = format(new Date(+durationMs), "%M:%SS.%f");
+          this.data.hitDuration = measurements[2];
         }
       }
       return;
