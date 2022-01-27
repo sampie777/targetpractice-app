@@ -5,11 +5,11 @@ import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
 import { DeviceData, DeviceState, TargetStatus } from "../../logic/DeviceState";
 
 interface ScreenProps {
-  device: Peripheral;
   deviceState?: DeviceState;
+  onResetPress?: () => void;
 }
 
-const DeviceHitStatus: React.FC<ScreenProps> = ({ device, deviceState }) => {
+const DeviceHitStatus: React.FC<ScreenProps> = ({ deviceState, onResetPress }) => {
   const [status, setStatus] = useState(TargetStatus.Unknown);
   const [hitForce, setHitForce] = useState("");
   const [hitDuration, setHitDuration] = useState("");
@@ -25,7 +25,7 @@ const DeviceHitStatus: React.FC<ScreenProps> = ({ device, deviceState }) => {
     setHitDuration(hitDuration);
   };
 
-  return <TouchableOpacity onPress={deviceState?.resetTarget} style={[
+  return <TouchableOpacity onPress={onResetPress} style={[
     styles.container,
     (status !== TargetStatus.Disabled ? {} : styles.statusDisabled),
     (status !== TargetStatus.Ready ? {} : styles.statusReady),

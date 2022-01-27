@@ -11,6 +11,7 @@ import LoadingOverlay from "../utils/LoadingOverlay";
 import ActionBar from "./ActionBar";
 import Settings from "./Settings";
 import { DeviceState } from "../../logic/DeviceState";
+import { Exercise } from "../../logic/exercises/Exercise";
 
 enum ConnectionState {
   Disconnected,
@@ -24,9 +25,17 @@ interface ScreenProps {
 }
 
 const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
+
+  if (device === undefined) {
+    return <View style={styles.container}>
+      <Text>Select a device to start a connection</Text>
+    </View>;
+  }
+
   const [connectionState, setConnectionState] = useState(ConnectionState.Disconnected);
   const [showSettings, setShowSettings] = useState(false);
   const [deviceState, setDeviceState] = useState<DeviceState | undefined>(undefined);
+  const [exercise, setExercise] = useState<Exercise | undefined>(undefined);
 
   useEffect(() => {
     onLaunch();
@@ -70,7 +79,7 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
     return () => {
       deviceState?.stopPolling();
       setConnectionState(ConnectionState.Disconnected);
-      setDeviceState(undefined)
+      setDeviceState(undefined);
     };
   }, [device]);
 
@@ -130,11 +139,13 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
     setShowSettings(false);
   };
 
-  if (device === undefined) {
-    return <View style={styles.container}>
-      <Text>Select a device to start a connection</Text>
-    </View>;
-  }
+  const onResetPress = () => {
+    if (exercise !== undefined) {
+      exercise.onResetPress?.();
+      return;
+    }
+    deviceState?.resetTarget();
+  };
 
   return <View style={styles.container}>
     {!showSettings ? undefined :
@@ -150,9 +161,9 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
 
       {deviceState === undefined
         ? <View style={{ flex: 1 }} />
-        : <DeviceHitStatus device={device} deviceState={deviceState} />}
+        : <DeviceHitStatus deviceState={deviceState} onResetPress={onResetPress} />}
 
-      <ActionBar device={device} />
+      <ActionBar deviceState={deviceState} exercise={exercise} setExercise={setExercise} />
     </View>
   </View>;
 };

@@ -1,17 +1,48 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { Peripheral } from "../../logic/bluetooth";
 import ActionBarItem from "./ActionBarItem";
+import { Exercise } from "../../logic/exercises/Exercise";
+import { ReactionTimeExercise } from "../../logic/exercises/ReactionTimeExercise";
+import { DeviceState } from "../../logic/DeviceState";
 
 interface Props {
-  device: Peripheral;
+  deviceState?: DeviceState,
+  exercise?: Exercise,
+  setExercise: (exercise?: Exercise) => void,
 }
 
-const ActionBar: React.FC<Props> = ({ device }) => {
+const ActionBar: React.FC<Props> = ({ deviceState, exercise, setExercise }) => {
+  useEffect(() => {
+    return () => {
+      exercise?.stop();
+    };
+  }, [exercise]);
+
+  const onItemClick = (clazz: any) => {
+    if (exercise !== undefined && exercise instanceof clazz) {
+      exercise.stop();
+      setExercise(undefined);
+      return;
+    }
+
+    if (deviceState === undefined) {
+      return;
+    }
+
+    const newExercise = new clazz(deviceState) as Exercise;
+    newExercise.start();
+    setExercise(newExercise);
+  };
+
   return <View style={styles.container}>
-    <ActionBarItem text={"item 1"} icon={"stopwatch"} />
-    <ActionBarItem text={"item 2"} icon={"random"} />
-    <ActionBarItem text={"item 3"} icon={"layer-group"} />
+    <ActionBarItem text={"Reaction time"}
+                   icon={"stopwatch"}
+                   highlighted={exercise instanceof ReactionTimeExercise}
+                   onPress={() => onItemClick(ReactionTimeExercise)} />
+    <ActionBarItem text={"item 2"}
+                   icon={"random"} />
+    <ActionBarItem text={"item 3"}
+                   icon={"layer-group"} />
   </View>;
 };
 
@@ -22,7 +53,7 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
     borderTopWidth: 1,
     borderTopColor: "#ddd",
-    backgroundColor: "#fff",
+    backgroundColor: "#fff"
   }
 });
 
