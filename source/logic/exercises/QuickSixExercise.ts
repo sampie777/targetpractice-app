@@ -9,14 +9,14 @@ interface Hit {
 }
 
 export class QuickSixExercise extends Exercise {
-  private readonly targetResetTimeout = 400;
+  private readonly targetResetTimeout = 200;
   private readonly exerciseStartMinimumTimeout = 4000;
   private readonly exerciseStartMaximumTimeout = 8000;
   private isStepping = false;
   private isHit = false;
   private timer: any = null;
 
-  private readonly maxHitCount = 1;
+  private readonly maxHitCount = 6;
   private exerciseStartTime: Date | undefined = undefined;
   private hits: Hit[] = [];
 
@@ -40,24 +40,23 @@ export class QuickSixExercise extends Exercise {
     );
   };
 
-  stop = () => {
+  stop = (resetTarget: boolean = true) => {
     this.deviceState.removeEventListener(this.onHitStateUpdated);
     this.stopTimer();
     // Only reset target when exercise not finished (as the finish should also reset it)
-    if (this.hits.length !== this.maxHitCount) {
+    if (resetTarget && this.hits.length !== this.maxHitCount) {
       this.deviceState.resetTarget();
     }
   };
 
   onResetPress = () => {
-    this.stopTimer();
-    this.deviceState.disableTarget();
+    this.stop(false);
 
     // Reset values
     this.hits = [];
     this.exerciseStartTime = undefined;
 
-    this.step();
+    this.start();
   };
 
   private step = () => {
