@@ -1,5 +1,5 @@
 import { Exercise } from "./Exercise";
-import { DeviceData, DeviceState, TargetStatus } from "../DeviceState";
+import { DeviceState } from "../DeviceState";
 
 export class ReactionTimeExercise implements Exercise {
   private deviceState: DeviceState;
@@ -13,13 +13,11 @@ export class ReactionTimeExercise implements Exercise {
   };
 
   start = () => {
-    this.deviceState.addEventListener(this.onHitStateUpdated);
     this.deviceState.disableTarget();
     this.step();
   };
 
   stop = () => {
-    this.deviceState.removeEventListener(this.onHitStateUpdated);
     this.stopTimer();
     this.deviceState.resetTarget();
   };
@@ -40,12 +38,6 @@ export class ReactionTimeExercise implements Exercise {
       this.deviceState.resetTarget();
       this.isStepping = false;
     }, Math.random() * (this.maximumTargetResetTimeout - this.minimumTargetResetTimeout) + this.minimumTargetResetTimeout);
-  };
-
-  private onHitStateUpdated = ({ targetStatus }: DeviceData) => {
-    if (targetStatus === TargetStatus.Hit) {
-      this.step();
-    }
   };
 
   private stopTimer = () => {
