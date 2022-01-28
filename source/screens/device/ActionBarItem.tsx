@@ -5,13 +5,15 @@ import FontAwesome5Icon from "react-native-vector-icons/FontAwesome5";
 interface Props {
   text?: string;
   onPress?: () => void;
+  onLongPress?: () => void;
   icon: string;
   highlighted?: boolean;
 }
 
-const ActionBarItem: React.FC<Props> = ({ text, onPress, icon, highlighted = false }) => {
+const ActionBarItem: React.FC<Props> = ({ text, onPress, onLongPress, icon, highlighted = false }) => {
   return <TouchableOpacity style={[styles.container, (highlighted ? styles.containerHighlight : {})]}
-                           onPress={onPress}>
+                           onPress={onPress}
+                           onLongPress={onLongPress}>
     <FontAwesome5Icon name={icon}
                       style={[styles.icon, (highlighted ? styles.textHighlight : {})]} />
     <Text style={[styles.text, (highlighted ? styles.textHighlight : {})]}>{text}</Text>

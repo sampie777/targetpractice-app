@@ -1,16 +1,20 @@
 import { Exercise } from "./Exercise";
-import { DeviceState } from "../DeviceState";
 
-export class ReactionTimeExercise implements Exercise {
-  private deviceState: DeviceState;
+export class ReactionTimeExercise extends Exercise {
+  private readonly minimumTargetResetTimeout = 3000;
+  private readonly maximumTargetResetTimeout = 8000;
   private isStepping = false;
   private timer: any = null;
-  private minimumTargetResetTimeout = 3000;
-  private maximumTargetResetTimeout = this.minimumTargetResetTimeout + 8000;
 
-  constructor(deviceState: DeviceState) {
-    this.deviceState = deviceState;
-  };
+  static readonly title = "Reaction time";
+  static readonly description =
+    "This is a single shot exercise. \n" +
+    "\n" +
+    "1. When activated, the target will go dark for an random amount of time. \n" +
+    "2. When the target turns on, you have to shoot it as quick as you can. The results will be shown on screen. \n" +
+    "3. Tap the screen to start a new round.\n" +
+    "\n" +
+    "If you weren't ready, just tap the screen to reset.";
 
   start = () => {
     this.deviceState.disableTarget();

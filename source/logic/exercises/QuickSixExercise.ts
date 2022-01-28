@@ -1,5 +1,5 @@
 import { Exercise } from "./Exercise";
-import { DeviceData, DeviceState, TargetStatus } from "../DeviceState";
+import { DeviceData, TargetStatus } from "../DeviceState";
 import { Alert } from "react-native";
 import { format } from "../utils";
 
@@ -8,25 +8,28 @@ interface Hit {
   time: number;
 }
 
-export class QuickSixExercise implements Exercise {
-  private deviceState: DeviceState;
-  private disable?: () => void;
-
+export class QuickSixExercise extends Exercise {
+  private readonly targetResetTimeout = 400;
+  private readonly exerciseStartMinimumTimeout = 4000;
+  private readonly exerciseStartMaximumTimeout = 8000;
   private isStepping = false;
   private isHit = false;
   private timer: any = null;
-  private targetResetTimeout = 400;
-  private exerciseStartMinimumTimeout = 4000;
-  private exerciseStartMaximumTimeout = 8000;
 
+  private readonly maxHitCount = 1;
   private exerciseStartTime: Date | undefined = undefined;
-  private maxHitCount = 1;
   private hits: Hit[] = [];
 
-  constructor(deviceState: DeviceState, disable?: () => void) {
-    this.deviceState = deviceState;
-    this.disable = disable;
-  };
+  static readonly title = "Quick Six";
+  static readonly description =
+    "This is a six shot exercise. The goal is to shot six shots on target as quickly as possible. \n" +
+    "\n" +
+    "1. When activated, the target will go dark for an random amount of time. \n" +
+    "2. When the target turns on, you have to shoot it as quick as you can. \n" +
+    "3. The target will turn on again quickly so you can place your next shot. \n" +
+    "4. After six shots, a summary will be shown on screen. \n" +
+    "\n" +
+    "To start over during the exercise, just tap the screen.";
 
   start = () => {
     this.deviceState.addEventListener(this.onHitStateUpdated);
@@ -49,6 +52,11 @@ export class QuickSixExercise implements Exercise {
   onResetPress = () => {
     this.stopTimer();
     this.deviceState.disableTarget();
+
+    // Reset values
+    this.hits = [];
+    this.exerciseStartTime = undefined;
+
     this.step();
   };
 

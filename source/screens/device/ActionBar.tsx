@@ -1,10 +1,29 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import ActionBarItem from "./ActionBarItem";
 import { Exercise } from "../../logic/exercises/Exercise";
 import { ReactionTimeExercise } from "../../logic/exercises/ReactionTimeExercise";
 import { DeviceState } from "../../logic/DeviceState";
 import { QuickSixExercise } from "../../logic/exercises/QuickSixExercise";
+
+const ExerciseItem: React.FC<{
+  clazz: typeof Exercise,
+  exercise?: Exercise,
+  onPress?: (clazz: typeof Exercise) => void;
+  onLongPress?: (clazz: typeof Exercise) => void;
+  icon: string;
+}> = ({
+        clazz,
+        exercise,
+        onPress,
+        onLongPress,
+        icon
+      }) =>
+  <ActionBarItem text={clazz.title}
+                 icon={icon}
+                 highlighted={exercise instanceof clazz}
+                 onPress={() => onPress?.(clazz)}
+                 onLongPress={() => onLongPress?.(clazz)} />;
 
 interface Props {
   deviceState?: DeviceState,
@@ -24,7 +43,7 @@ const ActionBar: React.FC<Props> = ({ deviceState, exercise, setExercise }) => {
     setExercise(undefined);
   };
 
-  const onItemClick = (clazz: any) => {
+  const onItemPress = (clazz: any) => {
     if (exercise !== undefined && exercise instanceof clazz) {
       exercise.stop();
       setExercise(undefined);
@@ -40,16 +59,24 @@ const ActionBar: React.FC<Props> = ({ deviceState, exercise, setExercise }) => {
     setExercise(newExercise);
   };
 
+  const onItemLongPress = (clazz: typeof Exercise) => {
+    if (clazz.description.length === 0) {
+      return;
+    }
+    Alert.alert(clazz.title, clazz.description);
+  };
+
   return <View style={styles.container}>
-    <ActionBarItem text={"Reaction time"}
-                   icon={"stopwatch"}
-                   highlighted={exercise instanceof ReactionTimeExercise}
-                   onPress={() => onItemClick(ReactionTimeExercise)} />
-    {/*<ActionBarItem text={"item 2"} icon={"random"} />*/}
-    <ActionBarItem text={"Quick Six"}
-                   icon={"layer-group"}
-                   highlighted={exercise instanceof QuickSixExercise}
-                   onPress={() => onItemClick(QuickSixExercise)} />
+    <ExerciseItem exercise={exercise}
+                  clazz={ReactionTimeExercise}
+                  icon={"stopwatch"}
+                  onPress={onItemPress}
+                  onLongPress={onItemLongPress} />
+    <ExerciseItem exercise={exercise}
+                  clazz={QuickSixExercise}
+                  icon={"layer-group"}
+                  onPress={onItemPress}
+                  onLongPress={onItemLongPress} />
   </View>;
 };
 
