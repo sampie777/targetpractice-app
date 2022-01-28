@@ -1,6 +1,6 @@
 {
   "name": "targetpractice",
-  "version": "0.0.1-SNAPSHOT",
+  "version": "0.1.0-SNAPSHOT",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -38,6 +38,7 @@
     "typescript": "^4.5.5"
   },
   "jest": {
-    "preset": "react-native"
+    "preset": "react-native",
+    "verbose": true
   }
 }

@@ -2,6 +2,7 @@
 
 To be used with ESP32 hardware with Bluetooth LE connection. See suggested firmware: https://github.com/sampie777/targetpractice-ESP32server.
 
+> Apologies for the dirty code in some places. This was created as prototype, not to be distributed.
 
 ## How it works
 
@@ -11,7 +12,7 @@ The app will show the current status of the target. When the target is hit, some
 
 Use the configuration menu to set up the target: hit threshold, LED brightness, and app refresh interval (soon this will be replaced with a notification system).
 
-In the future, the exercises will be implemented. These exercises will control the target for you so you can focus on practicing. 
+Exercises can be started. These exercises will control the target for you so you can focus on practicing. Long press on an exercise to see its description.  
 
 If the app crashes or the target/app doesn't respond, just close the app and try again. In serious connection problem cases: turn off the target and your bluetooth. Exit the app also. Turn bluetooth on and enter the app. Then, turn on the target.
 
