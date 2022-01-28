@@ -117,6 +117,7 @@ const DeviceScreen: React.FC<ScreenProps> = ({ device, disconnect }) => {
 
         const newDeviceState = new DeviceState(device, disconnect);
         newDeviceState.startPolling();
+        newDeviceState.resetTarget();
         setDeviceState(newDeviceState);
       })
       .catch((error: any) => {
