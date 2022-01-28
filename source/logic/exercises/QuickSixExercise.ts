@@ -20,7 +20,7 @@ export class QuickSixExercise implements Exercise {
   private exerciseStartMaximumTimeout = 8000;
 
   private exerciseStartTime: Date | undefined = undefined;
-  private maxHitCount = 6;
+  private maxHitCount = 1;
   private hits: Hit[] = [];
 
   constructor(deviceState: DeviceState, disable?: () => void) {
@@ -40,7 +40,10 @@ export class QuickSixExercise implements Exercise {
   stop = () => {
     this.deviceState.removeEventListener(this.onHitStateUpdated);
     this.stopTimer();
-    this.deviceState.resetTarget();
+    // Only reset target when exercise not finished (as the finish should also reset it)
+    if (this.hits.length !== this.maxHitCount) {
+      this.deviceState.resetTarget();
+    }
   };
 
   onResetPress = () => {
@@ -61,6 +64,7 @@ export class QuickSixExercise implements Exercise {
 
     if (this.hits.length >= this.maxHitCount) {
       this.endExercise();
+      return;
     }
 
     this.timer = setTimeout(() => {
@@ -104,7 +108,13 @@ export class QuickSixExercise implements Exercise {
       `Total duration: ${format(new Date(totalTime), "%M:%SS.%f")}\n` +
       `\n` +
       `Average force: ${averageHitForce} / 4095\n` +
-      `Average reaction time: ${format(new Date(averageHitTime), "%M:%SS.%f")}`
+      `Average reaction time: ${format(new Date(averageHitTime), "%M:%SS.%f")}`,
+      [
+        {
+          text: "OK",
+          onPress: () => this.deviceState.resetTarget()
+        }
+      ]
     );
   };
 
